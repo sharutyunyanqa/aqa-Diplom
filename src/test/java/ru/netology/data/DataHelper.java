@@ -10,7 +10,10 @@ import java.util.Locale;
 import java.util.Random;
 
 public class DataHelper {
-    private static final Faker faker = new Faker(new Locale("ru"));
+    private static final Faker fakerRu = new Faker(new Locale("ru"));
+
+
+    private static final Faker fakerEn = new Faker(new Locale("en"));
 
     private DataHelper() {
     }
@@ -23,11 +26,9 @@ public class DataHelper {
         return new SecondCardInfo("5555 6666 7777 8888");
     }
 
-    public static CardInfoNull getNull() {
-        return new CardInfoNull (null);
-    }
+
     public static CardInfoRandom generateRandomCardNumber(){
-        return new CardInfoRandom(faker.numerify("################")) ;
+        return new CardInfoRandom(fakerEn.numerify("################")) ;
     }
     public static String month() {
         Random random = new Random();
@@ -73,27 +74,33 @@ public class DataHelper {
 
 
     public static String randomYear() {
-        return faker.numerify("#");
+        return fakerEn.numerify("#");
     }
 
     public static String ownerInfo() {
-        String firstname = faker.name().firstName();
-        String lastname = faker.name().lastName();
+        String firstname = fakerRu.name().firstName();
+        String lastname = fakerRu.name().lastName();
+        return firstname + " " + lastname;
+    }
+    public static String ownerInfoEng() {
+        String firstname = fakerEn.name().firstName();
+        String lastname = fakerEn.name().lastName();
         return firstname + " " + lastname;
     }
 
+
     public static int generateOwnerInfo() {
-        return faker.number().randomDigit();
+        return fakerRu.number().randomDigit();
     }
 
     public static int cvcInfo() {
-        return faker.number().numberBetween(100, 999);
+        return fakerRu.number().numberBetween(100, 999);
     }
     public static int cvcNumber(){
-        return faker.number().numberBetween(0,9);
+        return fakerRu.number().numberBetween(0,9);
     }
     public static String cvcDoubleNumber(){
-        return faker.numerify("##");
+        return fakerRu.numerify("##");
     }
 
     @Value
@@ -107,25 +114,8 @@ public class DataHelper {
     }
 
     @Value
-    public static class OwnerInfoData {
-        String ownerInfo;
-    }
-
-    @Value
-    public static class getStatusInData {
-        String status;
-    }
-    @Value
-    public static class CardInfoNull {
-        String cardNumber;
-    }
-    @Value
     public static class CardInfoRandom {
         String cardNumber;
-    }
-    @Value
-    public static class generateMonth {
-        String MonthNumber;
     }
 
 

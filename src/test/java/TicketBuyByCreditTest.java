@@ -12,12 +12,12 @@ import ru.netology.data.SQLHelper;
 import java.time.Duration;
 
 import static com.codeborne.selenide.Condition.*;
+import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.*;
 import static ru.netology.data.DataHelper.*;
 import static ru.netology.data.SQLHelper.cleanDatabase;
 
-
-public class TicketBuyerTest {
+public class TicketBuyByCreditTest {
 
     DataHelper.CardInfo firstCardInfo;
     DataHelper.SecondCardInfo secondCardInfo;
@@ -30,7 +30,7 @@ public class TicketBuyerTest {
     @BeforeEach
     void setUp() {
         open("http://localhost:8080");
-        $(By.className("button")).click();
+        $(byText("Купить в кредит")).click();
         firstCardInfo = DataHelper.getFirstCardInfo();
         secondCardInfo = DataHelper.getSecondCardInfo();
 
@@ -38,19 +38,18 @@ public class TicketBuyerTest {
     }
 
     @AfterEach
-     void TearDownAll(){
+    void TearDownAll() {
         cleanDatabase();
     }
+
     @AfterAll
     static void tearDownAll() {
         SelenideLogger.removeListener("allure");
     }
 
-
     @Test
-    @DisplayName("Test happy path for form Buy")
-    public void shouldTestTheHappyPath() {
-
+    @DisplayName("Test happy path for form Buy by credit")
+    public void shouldTestTheHappyPathForSecondForm() {
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -60,39 +59,16 @@ public class TicketBuyerTest {
         int generatedCvc = cvcInfo();
         $("input[placeholder='" + "999" + "']").setValue(String.valueOf(generatedCvc));
         $$("button span.button__text").find(exactText("Продолжить")).click();
-        String expectedID = "APPROVED";
         $(".notification__title")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Успешно"));
-        Assertions.assertEquals(expectedID, SQLHelper.geStatusInData());
+        Assertions.assertEquals("APPROVED", SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
-    @DisplayName("Test happy path with latin Owner for form Buy")
-    public void shouldTestTheHappyPathWithLatin() {
-
-        $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
-        String randomMonth = month();
-        $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
-        String randomYear = generateYear("yy");
-        $("input[placeholder='" + "22" + "']").setValue(String.valueOf(randomYear));
-        $$(".input__control").get(3).setValue(DataHelper.ownerInfoEng());
-        int generatedCvc = cvcInfo();
-        $("input[placeholder='" + "999" + "']").setValue(String.valueOf(generatedCvc));
-        $$("button span.button__text").find(exactText("Продолжить")).click();
-        String expectedID = "APPROVED";
-        $(".notification__title")
-                .shouldBe(visible, Duration.ofSeconds(30))
-                .shouldHave(exactText("Успешно"));
-        Assertions.assertEquals(expectedID, SQLHelper.geStatusInData());
-
-    }
-
-    @Test
-    @DisplayName("Test negative value for card number form Buy")
-    public void shouldTestNegativeForCardNumber() {
-
+    @DisplayName("Test negative value for card number form Buy by credit")
+    public void shouldTestNegativeForCardNumberForSecondForm() {
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getSecondCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -105,15 +81,14 @@ public class TicketBuyerTest {
         $(" .notification__content")
                 .shouldBe(Condition.visible, Duration.ofSeconds(15))
                 .shouldHave(exactText("Ошибка! Банк отказал в проведении операции."));
-        Assertions.assertEquals("DECLINED", SQLHelper.geStatusInData());
+        Assertions.assertEquals("DECLINED", SQLHelper.getStatusForCreditForm());
 
 
     }
 
     @Test
     @DisplayName("Card Number is null")
-    public void shouldTestCardNumberNull() {
-
+    public void shouldTestCardNumberNullForSecondForm() {
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
         String randomYear = generateYear("yy");
@@ -125,13 +100,31 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
+
+    }
+    @Test
+    @DisplayName("Test happy path with latin Owner for Credit")
+    public void shouldTestTheHappyPathWithLatinCredit() {
+        $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
+        String randomMonth = month();
+        $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
+        String randomYear = generateYear("yy");
+        $("input[placeholder='" + "22" + "']").setValue(String.valueOf(randomYear));
+        $$(".input__control").get(3).setValue(DataHelper.ownerInfoEng());
+        int generatedCvc = cvcInfo();
+        $("input[placeholder='" + "999" + "']").setValue(String.valueOf(generatedCvc));
+        $$("button span.button__text").find(exactText("Продолжить")).click();
+        $(".notification__title")
+                .shouldBe(visible, Duration.ofSeconds(30))
+                .shouldHave(exactText("Успешно"));
+        Assertions.assertEquals("APPROVED", SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Card Number is incorrect")
-    public void shouldTestIncorrectCardNumber() {
+    public void shouldTestIncorrectCardNumberForSecondForm() {
 
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.generateRandomCardNumber().getCardNumber());
         String randomMonth = month();
@@ -145,13 +138,13 @@ public class TicketBuyerTest {
         $(".notification_status_error .notification__content")
                 .shouldBe(Condition.visible, Duration.ofSeconds(15))
                 .shouldHave(exactText("Ошибка! Банк отказал в проведении операции."));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Month value is 13")
-    public void shouldTestMonthNumber13() {
+    public void shouldTestMonthNumber13ForSecondForm() {
 
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         $("input[placeholder='" + "08" + "']").setValue("13");
@@ -164,12 +157,12 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Неверно указан срок действия карты"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("Month value is 00")
-    public void shouldTestMonthNumber00() {
+    public void shouldTestMonthNumber00ForSecondForm() {
 
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         $("input[placeholder='" + "08" + "']").setValue("00");
@@ -182,13 +175,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Неверно указан срок действия карты"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Month value is not a two digit number")
-    public void shouldTestMonthWithNotTwoDigitNumber() {
+    public void shouldTestMonthWithNotTwoDigitNumberForSecondForm() {
 
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         int monthRandom = generateMonth();
@@ -202,12 +195,12 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("Month value should be null")
-    public void shouldTestMonthValueNull() {
+    public void shouldTestMonthValueNullForSecondForm() {
 
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomYear = generateYear("yy");
@@ -219,13 +212,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Test empty form")
-    public void shouldTestEmptyForm() {
+    public void shouldTestEmptyFormForSecondForm() {
 
         $$("button span.button__text").find(exactText("Продолжить")).click();
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").parent().parent().lastChild().shouldBe(visible).shouldHave(exactText("Неверный формат"));
@@ -237,8 +230,9 @@ public class TicketBuyerTest {
 
     @Test
     @DisplayName("Month value should be past")
-    public void shouldTestPastMonth() {
-
+    public void shouldTestPastMonthForSecondForm() {
+//        
+        $(By.className("button")).click();
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String monthPast = lastMonth("MM");
         $("input[placeholder='" + "08" + "']").setValue(monthPast);
@@ -251,14 +245,14 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Неверно указан срок действия карты"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Year value should be past")
-    public void shouldTestPastYear() {
-
+    public void shouldTestPastYearForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -271,13 +265,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Истёк срок действия карты"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("Year value is empty")
-    public void shouldTestYearIsEmpty() {
-
+    public void shouldTestYearIsEmptyForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -288,13 +282,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("Year value is more than five years form now")
-    public void shouldTestYearFutureMoreThanFiveYears() {
-
+    public void shouldTestYearFutureMoreThanFiveYearsForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -307,13 +301,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Неверно указан срок действия карты"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("Year value is not a two digit number")
-    public void shouldTestYearWithOneDigitNumber() {
-
+    public void shouldTestYearWithOneDigitNumberForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -326,13 +320,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("CVC value is one digit number")
-    public void shouldTestCvcAsOneDigitNumber() {
-
+    public void shouldTestCvcAsOneDigitNumberForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -345,13 +339,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("CVC value is two digit number")
-    public void shouldTestCvcAsTwoDigitNumber() {
-
+    public void shouldTestCvcAsTwoDigitNumberForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -364,13 +358,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("Owner value is with numbers at the end")
-    public void shouldTestOwnerWithNumbers() {
-
+    public void shouldTestOwnerWithNumbersForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -384,14 +378,14 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Owner value is with numbers in the beginning")
-    public void shouldTestOwnerWithNumbersAtTheBeginning() {
-
+    public void shouldTestOwnerWithNumbersAtTheBeginningForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -405,15 +399,15 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
 
     }
 
     @Test
     @DisplayName("Owner value is digital")
-    public void shouldTestOwnerValueAsDigital() {
-
+    public void shouldTestOwnerValueAsDigitalForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -427,14 +421,14 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Owner value is empty")
-    public void shouldTestOwnerAsEmpty() {
-
+    public void shouldTestOwnerAsEmptyForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -446,13 +440,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Поле обязательно для заполнения"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("Owner value is with dot at the end")
-    public void shouldTestOwnerWithDotAtTheEnd() {
-
+    public void shouldTestOwnerWithDotAtTheEndForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -465,13 +459,13 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
     }
 
     @Test
     @DisplayName("Owner value is with dot at the beginning")
-    public void shouldTestOwnerWithDotAtTheBeginning() {
-
+    public void shouldTestOwnerWithDotAtTheBeginningForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -484,14 +478,14 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Owner value is a dot")
-    public void shouldTestOwnerAsADot() {
-
+    public void shouldTestOwnerAsADotForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -504,15 +498,15 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
 
     }
 
     @Test
     @DisplayName("Owner value is with hyphen at the end")
-    public void shouldTestOwnerWithHyphenAtTheEnd() {
-
+    public void shouldTestOwnerWithHyphenAtTheEndForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -525,14 +519,14 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Owner value is with hyphen at the beginning")
-    public void shouldTestOwnerWithHyphenAtTheBeginning() {
-
+    public void shouldTestOwnerWithHyphenAtTheBeginningForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -545,14 +539,14 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Owner value contains 2 letters")
-    public void shouldTestOwnerWithTwoLetters() {
-
+    public void shouldTestOwnerWithTwoLettersForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -565,14 +559,14 @@ public class TicketBuyerTest {
         $(".input__sub")
                 .shouldBe(visible)
                 .shouldHave(exactText("Неверный формат"));
-        Assertions.assertEquals(null, SQLHelper.geStatusInData());
+        Assertions.assertEquals(null, SQLHelper.getStatusForCreditForm());
 
     }
 
     @Test
     @DisplayName("Owner value contains letter dot and surname")
-    public void shouldTestOwnerWithCutedNameWithDot() {
-
+    public void shouldTestOwnerWithCutedNameWithDotForSecondForm() {
+//        
         $("input[placeholder='" + "0000 0000 0000 0000" + "']").setValue(DataHelper.getFirstCardInfo().getCardNumber());
         String randomMonth = month();
         $("input[placeholder='" + "08" + "']").setValue(String.valueOf(randomMonth));
@@ -582,29 +576,13 @@ public class TicketBuyerTest {
         int generatedCvc = cvcInfo();
         $("input[placeholder='" + "999" + "']").setValue(String.valueOf(generatedCvc));
         $$("button span.button__text").find(exactText("Продолжить")).click();
-        String expectedID = "APPROVED";
         $(".notification__title")
                 .shouldBe(visible, Duration.ofSeconds(30))
                 .shouldHave(exactText("Успешно"));
-        Assertions.assertEquals(expectedID, SQLHelper.geStatusInData());
+        Assertions.assertEquals("APPROVED", SQLHelper.getStatusForCreditForm());
 
     }
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'io.freefair.lombok' version "8.4"
-    id 'io.qameta.allure' version '2.9.6'
+   id 'io.qameta.allure' version '2.9.6'
 
 }
 
@@ -26,6 +26,7 @@ dependencies {
     testImplementation 'io.qameta.allure:allure-selenide:2.16.1'
     testImplementation 'mysql:mysql-connector-java:8.0.30'
     testImplementation 'commons-dbutils:commons-dbutils:1.7'
+    testImplementation 'io.rest-assured:rest-assured:4.3.0'
 
 }
 
