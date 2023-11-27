@@ -17,6 +17,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Start SUT
-        run:  java -jar aqa-shop.jar -P:jdbc.url=jdbc:mysql://127.0.0.1:3306/app & # java -jar app-mbank.jar &  #
+        run:   java -jar app-mbank.jar &  #java -jar aqa-shop.jar -P:jdbc.url=jdbc:mysql://127.0.0.1:3306/app & 
       - name: Build with Gradle
         run: ./gradlew test --info  -Dselenide.headless=true
