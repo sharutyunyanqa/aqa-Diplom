@@ -8,9 +8,9 @@
 * *Запустить на компьютере InetelliJ IDEA*
 * *Открыть проект QA-Diplom при помощи File-Open- и указать путь к папке проекта*
 * *Открыть терминал в InetelliJ IDEA и набрать команду docker-compose up и нажать на кнопку enter*
-* *После того, как появится надпись ready for connections, открыть еще одно окно терминала и с помощью команды java -jar aqa-shop.jar -P: jdbc.url=jdbc:mysql://127.0.0.1:3306/app запустить jar файл и нажать на кнопку enter*
+* *После того, как появится надпись ready for connections, открыть еще одно окно терминала и с помощью команды java -jar aqa-shop.jar запустить jar файл и нажать на кнопку enter*
 * *После того как появится надпись  Started ShopApplication in 26.759 seconds (JVM running for ) можно запускать авто-тесты.*
 
 ## Для того чтобы их запустить, нужно сделать следующее:
 * *Открыть новое окно в терминале*
-* *Написать  ./gradlew clean test и нажать на кнопку enter*
+* *Написать  ./gradlew clean test -D db.url=jdbc:mysql://localhost:3306/app и нажать на кнопку enter*
